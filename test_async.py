@@ -5,23 +5,31 @@ from uuid import uuid4
 from time import time
 
 
+def ensure_conn(f):
+
+    async def inner(*args, **kwargs):
+        redis = await aioredis.create_redis_pool('redis://localhost')
+
+        res = await f(*args, redis, **kwargs)
+
+        return res
+
+    return inner
+
+
 class TestAsync:
     def __init__(self, requests):
         self.requests = requests
-
-    async def test_all(self):
-        await asyncio.gather(self.test_sg(), self.test_hashes(), self.test_lists(), self.test_sets(), self.test_zsets())
-
-    async def get_redis(self):
-        redis = await aioredis.create_redis_pool('redis://localhost')
-        return redis
 
     async def close_redis(self, redis):
         redis.close()
         await redis.wait_closed()
 
-    async def test_sg(self):
-        redis = await self.get_redis()
+    async def test_all(self):
+        await asyncio.gather(self.test_sg(), self.test_hashes(), self.test_lists(), self.test_sets(), self.test_zsets())
+
+    @ensure_conn
+    async def test_sg(self, redis):
         for _ in range(self.requests * 100):
             key = str(uuid4())
             val = str(uuid4())
@@ -30,9 +38,8 @@ class TestAsync:
 
         await self.close_redis(redis)
 
-    async def test_hashes(self):
-        redis = await self.get_redis()
-
+    @ensure_conn
+    async def test_hashes(self, redis):
         for _ in range(5000):
             await redis.hmset('secret_info', str(uuid4()), str(uuid4()))
 
@@ -47,9 +54,8 @@ class TestAsync:
 
         await self.close_redis(redis)
 
-    async def test_lists(self):
-        redis = await self.get_redis()
-
+    @ensure_conn
+    async def test_lists(self, redis):
         vals = [str(uuid4()) for _ in range(2500)]
 
         for val in vals:
@@ -64,9 +70,8 @@ class TestAsync:
 
         await self.close_redis(redis)
 
-    async def test_sets(self):
-        redis = await self.get_redis()
-
+    @ensure_conn
+    async def test_sets(self, redis):
         await redis.sadd('my_set', *(str(uuid4()) for _ in range(5000)))
         await redis.sadd('other_set', *(str(uuid4()) for _ in range(5000)))
         await redis.sadd('another_set', *(str(uuid4()) for _ in range(5000)))
@@ -81,9 +86,8 @@ class TestAsync:
 
         await self.close_redis(redis)
 
-    async def test_zsets(self):
-        redis = await self.get_redis()
-
+    @ensure_conn
+    async def test_zsets(self, redis):
         for i in range(5000):
             await redis.zadd('records', i*i, str(uuid4()))
 
@@ -96,8 +100,8 @@ class TestAsync:
 
         await self.close_redis(redis)
 
-    async def flushall(self):
-        redis = await self.get_redis()
+    @ensure_conn
+    async def flushall(self, redis):
         await redis.flushall()
         await self.close_redis(redis)
 
