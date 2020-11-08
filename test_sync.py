@@ -109,5 +109,5 @@ class TestSync:
 
 
 if __name__ == '__main__':
-    t = TestSync()
+    t = TestSync(50)
     print(t.test_all())

@@ -1,4 +1,8 @@
 import argparse
+import asyncio
+
+from time import time
+
 from test_async import TestAsync
 from test_sync import TestSync
 
@@ -22,6 +26,7 @@ parser.add_argument('type',
                     help='Type of commands to be executed:\n\nl - lists commands\nh - hashes commands\ns - sets commands\nzs - sorted sets commands\nsg - set/get commands\n\nBy default requests number will be allocated by all commands will be tested',
                     default='all',
                     choices=['l, h, s, zs, sg, all'])
+
 parser.add_argument('tests',
                     help='Specify the number of tests',
                     type=int,
@@ -31,36 +36,77 @@ parser.add_argument('tests',
 args = parser.parse_args()
 reqs = args.requests
 type_ = args.type
-
-if reqs > 2000:
-    raise RequestsLimit('Specify requests number not more than 2000')
+tests = args.tests
 
 
-else:
+def main():
+
     a = TestAsync(reqs)
     s = TestSync(reqs)
 
-    if type_ == 'all':
+    def test_all_():
+        s1 = time()
         a.test_all()
-        s.test_all()
+        f1 = time()
+        s2 = time() 
+        asyncio.run(s.test_all())
+        f2 = time()
 
-    elif type_ == 'l':
+        return 
+
+    def test_sg_():
+        a.test_sg()
+        asyncio.run(s.test_sg())
+
+
+    def test_lists_():
         a.test_lists()
-        s.test_lists()
+        asyncio.run(s.test_lists())
 
-    elif type_ == 'h':
+
+    def test_hashes_():
         a.test_hashes()
-        s.test_hashes()
+        asyncio.run(s.test_hashes())
 
-    elif type_ == 's':
+
+    def test_sets_():
         a.test_sets()
-        s.test_sets()
+        asyncio.run(s.test_sets())
 
-    elif type_ == 'zs':
+
+    def test_zsets_():
         a.test_zsets()
-        s.test_zsets()
+        asyncio.run(s.test_zsets())
+
+
+    if type_ == 'all':
+        func = test_all_
 
     elif type_ == 'sg':
-        a.test_sg()
-        s.test_sg()
+        func = test_sg_
 
+    elif type_ == 'l':
+        func = test_lists_
+
+    elif type_ == 'h':
+        func = test_hashes_
+
+    elif type_ == 's':
+        func = test_sets_
+
+    elif type_ == 'zs':
+        func = test_zsets_
+
+    for _ in range(tests):
+        t1, t2 = func()
+        avg = 
+
+
+
+if reqs > 2000:
+    raise RequestsLimit('Specify requests number not more than 2000')
+else:
+    main()
+    
+
+    
