@@ -10,82 +10,103 @@ class TestAsync:
         self.requests = requests
 
     async def test_all(self):
-        self.client = await aioredis.create_redis_pool('redis://localhost')
-
         await asyncio.gather(self.test_sg(), self.test_hashes(), self.test_lists(), self.test_sets(), self.test_zsets())
 
-        await self.flushall()
+    async def get_redis(self):
+        redis = await aioredis.create_redis_pool('redis://localhost')
+        return redis
 
-        self.client.close()
-        await self.client.wait_closed()
+    async def close_redis(self, redis):
+        redis.close()
+        await redis.wait_closed()
 
     async def test_sg(self):
+        redis = await self.get_redis()
         for _ in range(self.requests * 100):
             key = str(uuid4())
             val = str(uuid4())
-            await self.client.set(key, val)
-            await self.client.get(key)
+            await redis.set(key, val)
+            await redis.get(key)
+
+        await self.close_redis(redis)
 
     async def test_hashes(self):
+        redis = await self.get_redis()
+
         for _ in range(5000):
-            await self.client.hmset('secret_info', str(uuid4()), str(uuid4()))
+            await redis.hmset('secret_info', str(uuid4()), str(uuid4()))
 
         for _ in range(self.requests * 5):
-            await self.client.hlen('secret_info')
-            await self.client.hvals('secret_info')
-            keys = await self.client.hkeys('secret_info')
+            await redis.hlen('secret_info')
+            await redis.hvals('secret_info')
+            keys = await redis.hkeys('secret_info')
 
             for val in keys[:500]:
-                await self.client.hexists('secret_info', str(uuid4()))
-                await self.client.hdel('secret_info', val)
+                await redis.hexists('secret_info', str(uuid4()))
+                await redis.hdel('secret_info', val)
+
+        await self.close_redis(redis)
 
     async def test_lists(self):
+        redis = await self.get_redis()
+
         vals = [str(uuid4()) for _ in range(2500)]
 
         for val in vals:
-            await self.client.lpush('my_list', val)
-            await self.client.rpush('my_list', val)
+            await redis.lpush('my_list', val)
+            await redis.rpush('my_list', val)
 
         for i in range(self.requests):
-            await self.client.lindex('my_list', i+500)
-            await self.client.lrange('my_list', i+500, 2000)
-            await self.client.lpop('my_list')
-            await self.client.lrem('my_list', 1, vals[i])
+            await redis.lindex('my_list', i+500)
+            await redis.lrange('my_list', i+500, 2000)
+            await redis.lpop('my_list')
+            await redis.lrem('my_list', 1, vals[i])
+
+        await self.close_redis(redis)
 
     async def test_sets(self):
-        await self.client.sadd('my_set', *(str(uuid4()) for _ in range(5000)))
-        await self.client.sadd('other_set', *(str(uuid4()) for _ in range(5000)))
-        await self.client.sadd('another_set', *(str(uuid4()) for _ in range(5000)))
+        redis = await self.get_redis()
+
+        await redis.sadd('my_set', *(str(uuid4()) for _ in range(5000)))
+        await redis.sadd('other_set', *(str(uuid4()) for _ in range(5000)))
+        await redis.sadd('another_set', *(str(uuid4()) for _ in range(5000)))
 
         for _ in range(self.requests):
-            await self.client.sinter('my_set', 'other_set', 'another_set')
-            await self.client.sunion('my_set', 'other_set', 'another_set')
-            await self.client.sdiff('my_set', 'ohter_set', 'another_set')
-            await self.client.smembers('my_set')
-            await self.client.scard('other_set')
-            await self.client.srandmember('another_set')
+            await redis.sinter('my_set', 'other_set', 'another_set')
+            await redis.sunion('my_set', 'other_set', 'another_set')
+            await redis.sdiff('my_set', 'ohter_set', 'another_set')
+            await redis.smembers('my_set')
+            await redis.scard('other_set')
+            await redis.srandmember('another_set')
+
+        await self.close_redis(redis)
 
     async def test_zsets(self):
+        redis = await self.get_redis()
+
         for i in range(5000):
-            await self.client.zadd('records', i*i, str(uuid4()))
+            await redis.zadd('records', i*i, str(uuid4()))
 
         for i in range(self.requests * 2):
-            await self.client.zrangebyscore('records', i, i+2000, withscores=True)
-            await self.client.zincrby('records', i*i, i*2000)
-            await self.client.zrange('records', i, i+2000, withscores=True)
-            await self.client.zcount('records', i*i, (i+2000)*(i+2000))
-            await self.client.zremrangebyrank('records', i+500, i+510)
+            await redis.zrangebyscore('records', i, i+2000, withscores=True)
+            await redis.zincrby('records', i*i, i*2000)
+            await redis.zrange('records', i, i+2000, withscores=True)
+            await redis.zcount('records', i*i, (i+2000)*(i+2000))
+            await redis.zremrangebyrank('records', i+500, i+510)
+
+        await self.close_redis(redis)
 
     async def flushall(self):
-        await self.client.flushall()
+        redis = await self.get_redis()
+        await redis.flushall()
+        await self.close_redis(redis)
 
 
 if __name__ == '__main__':
-    t = TestAsync(2000)
+    t = TestAsync(50)
     start = time()
     asyncio.run(t.test_all())
     finish = time()
-
     print(finish-start)
 
 # *** in seconds ***
@@ -104,4 +125,4 @@ if __name__ == '__main__':
 
 # 2000 req:
 # 189.7 and 206.6
-# 218.3 and 236.4 
+# 218.3 and 236.4

@@ -4,18 +4,18 @@ from uuid import uuid4
 from time import time
 
 
-def timeit(f):
-
-    def timed(*args, **kwargs):
-
-        start = time()
-        result = f(*args, **kwargs)
-        finish = time()
-
-        print(f'{f.__name__} took {finish-start} sec')
-        return result
-
-    return timed
+# def timeit(f):
+#
+#     def timed(*args, **kwargs):
+#
+#         start = time()
+#         result = f(*args, **kwargs)
+#         finish = time()
+#
+#         print(f'{f.__name__} took {finish-start} sec')
+#         return result
+#
+#     return timed
 
 
 class TestSync:
