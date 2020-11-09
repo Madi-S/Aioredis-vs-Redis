@@ -9,7 +9,7 @@
 
 ---
 
-## To run file
+## To run file:
 
 - For help: `python main.py -h`
 - Structure: `python main.py -r <number of requests> <type> <number of tests>`
@@ -17,7 +17,7 @@
 
 ---
 
-## Ready data
+## Ready data:
 
 If you do not want to compare the packages manually, here is preliminary ready data for 50 requests:
 
