@@ -35,7 +35,7 @@ parser.add_argument('tests',
                     choices=[i for i in range(1, 11)])
 
 parser.add_argument('-r', '--requests',
-                    help='Specify the integer amount of requests from client to server to server',
+                    help='Specify the integer amount of requests from client to server to server\nNo more than 2000 requests',
                     default=500,
                     type=int)
 
