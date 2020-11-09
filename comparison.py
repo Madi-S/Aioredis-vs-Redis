@@ -1,5 +1,8 @@
 import argparse
+
 import asyncio
+import aioredis
+import redis
 
 import math
 import numpy as np
@@ -21,19 +24,20 @@ class RequestsLimit(Exception):
 parser = argparse.ArgumentParser(
     description='Compare the speed between aioredis and redis frameworks')
 
-parser.add_argument('-r', '--requests',
-                    help='Specify the integer amount of requests from client to server to server',
-                    default=500,
-                    type=int)
 parser.add_argument('type',
                     help='Type of commands to be executed:\n\nl - lists commands\nh - hashes commands\ns - sets commands\nzs - sorted sets commands\nsg - set/get commands\n\nBy default requests number will be allocated by all commands will be tested',
                     default='all',
-                    choices=['l, h, s, zs, sg, all'])
+                    choices=['l', 'h', 's', 'zs', 'sg', 'all'])
 
 parser.add_argument('tests',
                     help='Specify the number of tests',
                     type=int,
-                    choices=[i for i in range(1, 10)])
+                    choices=[i for i in range(1, 11)])
+
+parser.add_argument('-r', '--requests',
+                    help='Specify the integer amount of requests from client to server to server',
+                    default=500,
+                    type=int)
 
 
 args = parser.parse_args()
@@ -44,19 +48,21 @@ tests = args.tests
 
 def count(time_: list):
     sum_ = sum(time_)
-    avg_ = sum_/len(time_)
+    len_ = len(time_)
     min_ = min(time_)
     max_ = max(time_)
+    avg_ = sum_/len_
 
     time_ = np.sort(time_)
-    Q1 = np.procentile('0.25', time_, interpolation='midpoint')
-    Q2 = np.procentile('0.50', time_, interpolation='midpoint')
-    Q3 = np.procentile('0.75', time_, interpolation='midpoint')
+    Q1 = np.percentile(time_, 25)
+    Q2 = np.percentile(time_, 50)
+    Q3 = np.percentile(time_, 75)
     IQR = Q3 - Q1
     low_limit = Q1 - 1.5 * IQR
     up_limit = Q3 + 1.5 * IQR
 
     return {
+        'len': len_,
         'sum': sum_,
         'avg': avg_,
         'min': min_,
@@ -68,6 +74,23 @@ def count(time_: list):
         'low_limit': low_limit,
         'up_limit': up_limit,
     }
+
+
+def print_stats(stats, package):
+    print(f'''
+    Tests taken {stats["len"]}
+    Statistics for {package.__name__}
+    ---     Overall time taken {stats["sum"]}       ---
+    ---     Average time taken {stats["avg"]}       ---
+    ---     Minimum time taken {stats["min"]}       ---
+    ---     Maximum time taken {stats["max"]}       ---
+    ---     First quartile {stats["Q1"]}            ---
+    ---     Second quartile {stats["Q2"]}           ---
+    ---     Third quartile {stats["Q3"]}            ---
+    ---     Interquartile range {stats["IQR"]}      ---
+    ---     Low limit {stats["low_limit"]}          ---
+    ---     Up limit {stats["up_limit"]}            ---
+    ''')
 
 
 def main():
@@ -131,7 +154,7 @@ def main():
         test_a = test_sets_a
         test_s = test_sets_s
 
-    elif type_ == 'zs':
+    else:
         test_a = test_zsets_a
         test_s = test_zsets_s
 
@@ -149,8 +172,18 @@ def main():
         finish = time()
         time_s.append(finish-start)
 
+    print(f'Test finished\n\nCounting results\n{time_a}\n{time_s}')
 
-if reqs > 2000:
-    raise RequestsLimit('Specify requests number not more than 2000')
-else:
-    main()
+    data_a = count(time_a)
+    data_s = count(time_s)
+
+    print_stats(data_a, aioredis)
+    print_stats(data_s, redis)
+
+
+if __name__ == '__main__':
+
+    if reqs > 2000:
+        raise RequestsLimit('Specify requests number not more than 2000')
+    else:
+        main()

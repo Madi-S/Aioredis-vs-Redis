@@ -21,12 +21,14 @@ class TestAsync:
     def __init__(self, requests):
         self.requests = requests
 
-    async def close_redis(self, redis):
+    async def close_flsuh(self, redis):
+        await redis.flushall()
         redis.close()
         await redis.wait_closed()
 
     async def test_all(self):
-        await asyncio.gather(self.test_sg(), self.test_hashes(), self.test_lists(), self.test_sets(), self.test_zsets())
+        await asyncio.gather(self.test_sg(), self.test_hashes(),
+                             self.test_lists(), self.test_sets(), self.test_zsets())
 
     @ensure_conn
     async def test_sg(self, redis):
@@ -36,7 +38,7 @@ class TestAsync:
             await redis.set(key, val)
             await redis.get(key)
 
-        await self.close_redis(redis)
+        await self.close_flsuh(redis)
 
     @ensure_conn
     async def test_hashes(self, redis):
@@ -52,7 +54,7 @@ class TestAsync:
                 await redis.hexists('secret_info', str(uuid4()))
                 await redis.hdel('secret_info', val)
 
-        await self.close_redis(redis)
+        await self.close_flsuh(redis)
 
     @ensure_conn
     async def test_lists(self, redis):
@@ -68,7 +70,7 @@ class TestAsync:
             await redis.lpop('my_list')
             await redis.lrem('my_list', 1, vals[i])
 
-        await self.close_redis(redis)
+        await self.close_flsuh(redis)
 
     @ensure_conn
     async def test_sets(self, redis):
@@ -84,7 +86,7 @@ class TestAsync:
             await redis.scard('other_set')
             await redis.srandmember('another_set')
 
-        await self.close_redis(redis)
+        await self.close_flsuh(redis)
 
     @ensure_conn
     async def test_zsets(self, redis):
@@ -98,12 +100,12 @@ class TestAsync:
             await redis.zcount('records', i*i, (i+2000)*(i+2000))
             await redis.zremrangebyrank('records', i+500, i+510)
 
-        await self.close_redis(redis)
+        await self.close_flsuh(redis)
 
     @ensure_conn
     async def flushall(self, redis):
         await redis.flushall()
-        await self.close_redis(redis)
+        await self.close_flsuh(redis)
 
 
 if __name__ == '__main__':

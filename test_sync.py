@@ -9,12 +9,13 @@ def ensure_conn(f):
     def inner(*args, **kwargs):
 
         with redis.Redis(host='localhost', port=6379) as client:
-            start = time()
+            #start = time()
 
             res = f(*args, client, **kwargs)
 
-            finish = time()
-            print(f'{f.__name__} took {finish-start} sec')
+            #finish = time()
+            client.flushall()
+            #print(f'{f.__name__} took {finish-start} sec')
 
             return res
 
@@ -34,9 +35,6 @@ class TestSync:
         self.test_lists()
         self.test_sets()
         self.test_zsets()
-        self.flushall()
-
-        client.close()
 
         end = time()
 
@@ -102,10 +100,6 @@ class TestSync:
             client.zrange('records', i, i+2000, withscores=True)
             client.zcount('records', i*i, (i+2000)*(i+2000))
             client.zremrangebyrank('records', i+500, i+510)
-
-    @ensure_conn
-    def flushall(self, client):
-        client.flushall()
 
 
 if __name__ == '__main__':
