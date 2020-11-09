@@ -80,16 +80,16 @@ def print_stats(stats, package):
     print(f'''
     Tests taken {stats["len"]}
     Statistics for {package.__name__}
-    ---     Overall time taken {stats["sum"]}       ---
-    ---     Average time taken {stats["avg"]}       ---
-    ---     Minimum time taken {stats["min"]}       ---
-    ---     Maximum time taken {stats["max"]}       ---
-    ---     First quartile {stats["Q1"]}            ---
-    ---     Second quartile {stats["Q2"]}           ---
-    ---     Third quartile {stats["Q3"]}            ---
-    ---     Interquartile range {stats["IQR"]}      ---
-    ---     Low limit {stats["low_limit"]}          ---
-    ---     Up limit {stats["up_limit"]}            ---
+    ---     Overall time taken {stats["sum"]}
+    ---     Average time taken {stats["avg"]}
+    ---     Minimum time taken {stats["min"]}
+    ---     Maximum time taken {stats["max"]}
+    ---     First quartile {stats["Q1"]}
+    ---     Second quartile {stats["Q2"]}
+    ---     Third quartile {stats["Q3"]}
+    ---     Interquartile range {stats["IQR"]}
+    ---     Low limit {stats["low_limit"]}
+    ---     Up limit {stats["up_limit"]}
     ''')
 
 
