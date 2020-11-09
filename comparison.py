@@ -47,19 +47,19 @@ tests = args.tests
 
 
 def count(time_: list):
-    sum_ = sum(time_)
     len_ = len(time_)
-    min_ = min(time_)
-    max_ = max(time_)
-    avg_ = sum_/len_
+    sum_ = round(sum(time_), 5)
+    min_ = round(min(time_), 5)
+    max_ = round(max(time_), 5)
+    avg_ = round(sum_/len_, 5)
 
     time_ = np.sort(time_)
-    Q1 = np.percentile(time_, 25)
-    Q2 = np.percentile(time_, 50)
-    Q3 = np.percentile(time_, 75)
-    IQR = Q3 - Q1
-    low_limit = Q1 - 1.5 * IQR
-    up_limit = Q3 + 1.5 * IQR
+    Q1 = round(np.percentile(time_, 25), 5)
+    Q2 = round(np.percentile(time_, 50), 5)
+    Q3 = round(np.percentile(time_, 75), 5)
+    IQR = round(Q3 - Q1, 5)
+    low_limit = round(Q1 - 1.5 * IQR, 5)
+    up_limit = round(Q3 + 1.5 * IQR, 5)
 
     return {
         'len': len_,
