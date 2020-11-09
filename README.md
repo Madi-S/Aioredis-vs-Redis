@@ -37,5 +37,6 @@ If you do not want to compare the packages manually, here is preliminary ready d
 
 
 
+TODO for contributors:
 
 - [ ] Add verbosity
