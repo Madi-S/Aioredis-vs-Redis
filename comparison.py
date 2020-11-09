@@ -172,7 +172,7 @@ def main():
         finish = time()
         time_s.append(finish-start)
 
-    print(f'Test finished\n\nCounting results\n{time_a}\n{time_s}')
+    print(f'Test finished\n\nCounting results for {reqs} requests {tests} times\n\n{time_a}\n{time_s}')
 
     data_a = count(time_a)
     data_s = count(time_s)
